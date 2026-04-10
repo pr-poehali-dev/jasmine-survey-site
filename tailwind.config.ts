@@ -19,8 +19,8 @@ export default {
 			}
 		},
 		fontFamily: {
-			cormorant: ['Cormorant', 'serif'],
-			caveat: ['Caveat', 'cursive'],
+			playfair: ['Playfair Display', 'serif'],
+			dancing: ['Dancing Script', 'cursive'],
 		},
 		extend: {
 			colors: {
