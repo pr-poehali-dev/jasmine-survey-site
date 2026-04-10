@@ -19,8 +19,8 @@ export default {
 			}
 		},
 		fontFamily: {
-			playfair: ['Playfair Display', 'serif'],
-			dancing: ['Dancing Script', 'cursive'],
+			garamond: ['EB Garamond', 'serif'],
+			lora: ['Lora', 'serif'],
 		},
 		extend: {
 			colors: {
