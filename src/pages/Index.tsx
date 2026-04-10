@@ -57,7 +57,6 @@ const questions = [
   },
 ];
 
-// ── Types ──────────────────────────────────────────────────────────────────
 interface FallingHeart {
   id: number;
   x: number;
@@ -66,6 +65,7 @@ interface FallingHeart {
   duration: number;
   emoji: string;
   swayAmp: number;
+  startY: number;
 }
 
 interface Firework {
@@ -76,23 +76,23 @@ interface Firework {
   particles: { angle: number; dist: number; emoji: string }[];
 }
 
-// ── Falling hearts on transition ───────────────────────────────────────────
+// ── 520 hearts rain ────────────────────────────────────────────────────────
 function HeartsRain({ active }: { active: boolean }) {
   const [hearts, setHearts] = useState<FallingHeart[]>([]);
-  const emojis = ["💕", "💗", "💖", "💓", "🩷", "❤️", "💘", "💝", "🌸", "✨"];
+  const emojis = ["💕", "💗", "💖", "💓", "🩷", "❤️", "💘", "💝", "🌸", "✨", "💞", "💟"];
 
   useEffect(() => {
     if (!active) { setHearts([]); return; }
-    const count = 120;
     setHearts(
-      Array.from({ length: count }, (_, i) => ({
+      Array.from({ length: 520 }, (_, i) => ({
         id: i,
-        x: Math.random() * 100,
-        size: 10 + Math.random() * 22,
-        delay: Math.random() * 0.8,
-        duration: 1.2 + Math.random() * 1.4,
+        x: Math.random() * 102 - 1,
+        size: 8 + Math.random() * 24,
+        delay: Math.random() * 1.6,
+        duration: 1.0 + Math.random() * 1.8,
         emoji: emojis[Math.floor(Math.random() * emojis.length)],
-        swayAmp: 20 + Math.random() * 40,
+        swayAmp: 15 + Math.random() * 50,
+        startY: -5 - Math.random() * 10,
       }))
     );
   }, [active]);
@@ -104,9 +104,10 @@ function HeartsRain({ active }: { active: boolean }) {
       {hearts.map((h) => (
         <span
           key={h.id}
-          className="absolute top-0 select-none"
+          className="absolute select-none"
           style={{
             left: `${h.x}%`,
+            top: `${h.startY}%`,
             fontSize: `${h.size}px`,
             animation: `rainFall ${h.duration}s ${h.delay}s ease-in forwards`,
             "--sway": `${h.swayAmp}px`,
@@ -122,28 +123,28 @@ function HeartsRain({ active }: { active: boolean }) {
 // ── Fireworks ──────────────────────────────────────────────────────────────
 function Fireworks({ active }: { active: boolean }) {
   const [bursts, setBursts] = useState<Firework[]>([]);
-  const colors = ["#f472b6", "#fb7185", "#e879f9", "#a78bfa", "#60a5fa", "#34d399", "#fbbf24"];
-  const partEmojis = ["✨", "⭐", "💫", "🌟", "💕", "🌸"];
+  const colors = ["#f472b6", "#fb7185", "#e879f9", "#a78bfa", "#60a5fa", "#34d399", "#fbbf24", "#f97316"];
+  const partEmojis = ["✨", "⭐", "💫", "🌟", "💕", "🌸", "🎉", "💖"];
 
   const spawnBurst = useCallback(() => {
     const newBurst: Firework = {
       id: Date.now() + Math.random(),
-      x: 10 + Math.random() * 80,
-      y: 10 + Math.random() * 60,
+      x: 8 + Math.random() * 84,
+      y: 5 + Math.random() * 65,
       color: colors[Math.floor(Math.random() * colors.length)],
-      particles: Array.from({ length: 18 }, (_, i) => ({
-        angle: (i / 18) * 360,
-        dist: 60 + Math.random() * 80,
+      particles: Array.from({ length: 22 }, (_, i) => ({
+        angle: (i / 22) * 360 + Math.random() * 8,
+        dist: 55 + Math.random() * 90,
         emoji: partEmojis[Math.floor(Math.random() * partEmojis.length)],
       })),
     };
-    setBursts((prev) => [...prev.slice(-8), newBurst]);
+    setBursts((prev) => [...prev.slice(-10), newBurst]);
   }, []);
 
   useEffect(() => {
     if (!active) { setBursts([]); return; }
     spawnBurst();
-    const interval = setInterval(spawnBurst, 500);
+    const interval = setInterval(spawnBurst, 420);
     return () => clearInterval(interval);
   }, [active, spawnBurst]);
 
@@ -152,21 +153,15 @@ function Fireworks({ active }: { active: boolean }) {
   return (
     <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
       {bursts.map((b) => (
-        <div
-          key={b.id}
-          className="absolute"
-          style={{ left: `${b.x}%`, top: `${b.y}%` }}
-        >
-          {/* core flash */}
+        <div key={b.id} className="absolute" style={{ left: `${b.x}%`, top: `${b.y}%` }}>
           <div
-            className="absolute w-4 h-4 rounded-full -translate-x-1/2 -translate-y-1/2"
+            className="absolute w-5 h-5 rounded-full -translate-x-1/2 -translate-y-1/2"
             style={{
               background: b.color,
-              boxShadow: `0 0 20px 8px ${b.color}`,
-              animation: "fwFlash 0.6s ease-out forwards",
+              boxShadow: `0 0 24px 10px ${b.color}`,
+              animation: "fwFlash 0.65s ease-out forwards",
             }}
           />
-          {/* particles */}
           {b.particles.map((p, i) => {
             const rad = (p.angle * Math.PI) / 180;
             const tx = Math.cos(rad) * p.dist;
@@ -174,12 +169,13 @@ function Fireworks({ active }: { active: boolean }) {
             return (
               <span
                 key={i}
-                className="absolute text-sm select-none"
+                className="absolute select-none"
                 style={{
                   left: 0, top: 0,
+                  fontSize: "13px",
                   "--tx": `${tx}px`,
                   "--ty": `${ty}px`,
-                  animation: `fwParticle 0.9s ${i * 0.02}s ease-out forwards`,
+                  animation: `fwParticle 1.0s ${i * 0.018}s ease-out forwards`,
                 } as React.CSSProperties}
               >
                 {p.emoji}
@@ -192,7 +188,7 @@ function Fireworks({ active }: { active: boolean }) {
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
+// ── Main ───────────────────────────────────────────────────────────────────
 export default function Index() {
   const [phase, setPhase] = useState<"intro" | "quiz" | "result">("intro");
   const [currentQ, setCurrentQ] = useState(0);
@@ -205,15 +201,14 @@ export default function Index() {
   const [heartsRain, setHeartsRain] = useState(false);
   const [fireworks, setFireworks] = useState(false);
 
-  // bg ambient particles
   const [ambient] = useState(() =>
     Array.from({ length: 14 }, (_, i) => ({
-      emoji: ["💕","🌸","💗","✨","💖","🌷","🫧","💓","⭐"][i % 9],
+      emoji: ["💕", "🌸", "💗", "✨", "💖", "🌷", "🫧", "💓", "⭐"][i % 9],
       x: Math.random() * 92 + 2,
       y: Math.random() * 88 + 2,
       delay: Math.random() * 4,
       duration: 3 + Math.random() * 3,
-      size: 13 + Math.random() * 14,
+      size: 12 + Math.random() * 14,
     }))
   );
 
@@ -222,7 +217,7 @@ export default function Index() {
 
   const triggerHearts = () => {
     setHeartsRain(true);
-    setTimeout(() => setHeartsRain(false), 2200);
+    setTimeout(() => setHeartsRain(false), 2800);
   };
 
   const handleStart = () => {
@@ -244,7 +239,6 @@ export default function Index() {
       setTimeout(() => setCorrectIdx(q.options.indexOf(q.correct)), 380);
     }
 
-    // wait → show hearts rain → transition
     setTimeout(() => {
       triggerHearts();
       setTimeout(() => {
@@ -262,7 +256,7 @@ export default function Index() {
           }
           setTransitioning(false);
         }, 420);
-      }, 900);
+      }, 1000);
     }, 700);
   };
 
@@ -282,33 +276,30 @@ export default function Index() {
   return (
     <div
       className="min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-10"
-      style={{ background: "radial-gradient(ellipse at 25% 15%, #fce7f3 0%, #fff0f6 45%, #fdf4f8 100%)" }}
+      style={{ background: "radial-gradient(ellipse at 30% 20%, #fce7f3 0%, #fff5f8 50%, #fdf2f8 100%)" }}
     >
-      {/* Ambient particles */}
+      {/* ambient */}
       {ambient.map((p, i) => (
         <span
           key={i}
           className="absolute pointer-events-none select-none"
           style={{
             left: `${p.x}%`, top: `${p.y}%`,
-            fontSize: `${p.size}px`, opacity: 0.16,
+            fontSize: `${p.size}px`, opacity: 0.15,
             animation: `ambientFloat ${p.duration}s ${p.delay}s ease-in-out infinite`,
           }}
         >{p.emoji}</span>
       ))}
 
-      {/* Hearts rain layer */}
       <HeartsRain active={heartsRain} />
-
-      {/* Fireworks layer */}
       <Fireworks active={fireworks} />
 
-      {/* Card */}
+      {/* card wrapper */}
       <div
         className="relative z-10 w-full max-w-lg"
         style={{
           opacity: transitioning ? 0 : 1,
-          transform: transitioning ? "translateY(24px) scale(0.95)" : "translateY(0) scale(1)",
+          transform: transitioning ? "translateY(26px) scale(0.94)" : "translateY(0) scale(1)",
           transition: "opacity 0.38s cubic-bezier(0.4,0,0.2,1), transform 0.38s cubic-bezier(0.4,0,0.2,1)",
         }}
       >
@@ -316,24 +307,39 @@ export default function Index() {
         {/* ── INTRO ── */}
         {phase === "intro" && (
           <div className="text-center">
-            <div className="inline-block text-7xl mb-5" style={{ animation: "heartPulse 1.5s ease-in-out infinite" }}>
-              💕
+            <div className="inline-block text-6xl mb-6" style={{ animation: "heartPulse 1.5s ease-in-out infinite" }}>
+              💌
             </div>
-            <h1 className="font-playfair text-5xl text-rose-400 font-semibold tracking-wide mb-2" style={{ fontStyle: "italic" }}>
-              Our Story
-            </h1>
-            <p className="font-dancing text-rose-300 text-2xl mb-1">a little quiz for a princess</p>
-            <p className="font-dancing text-rose-200 text-xl mb-10">9 questions about us ✨</p>
 
+            {/* letter paper */}
             <div
-              className="bg-white/60 backdrop-blur-md rounded-3xl p-8 mb-8 text-left border border-rose-100"
-              style={{ boxShadow: "0 8px 48px rgba(244,114,182,0.12)" }}
+              className="relative bg-amber-50 rounded-sm mb-8 text-left overflow-hidden"
+              style={{
+                boxShadow: "0 4px 6px rgba(0,0,0,0.06), 0 12px 40px rgba(244,114,182,0.15), 4px 4px 0 #f3d5b5",
+                border: "1px solid #e8c99a",
+              }}
             >
-              <p className="font-dancing text-rose-500 text-xl leading-relaxed">
-                Hey Princess Jasmine 🌸<br />
-                Do you remember all our special moments?<br />
-                Let's see how well you know our story~
-              </p>
+              {/* ruled lines */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: "repeating-linear-gradient(transparent, transparent 31px, #fce4c8 31px, #fce4c8 32px)",
+                backgroundPositionY: "40px",
+              }} />
+              {/* red margin line */}
+              <div className="absolute left-14 top-0 bottom-0 w-px bg-rose-200 pointer-events-none" />
+
+              <div className="relative px-8 pt-8 pb-8 pl-16">
+                <p className="font-dancing text-rose-400 text-sm mb-5 tracking-widest uppercase" style={{ letterSpacing: "0.15em" }}>
+                  A little quiz
+                </p>
+                <h1 className="font-playfair text-3xl text-rose-500 font-semibold mb-2 leading-tight" style={{ fontStyle: "italic" }}>
+                  For Princess Jasmine
+                </h1>
+                <p className="font-dancing text-stone-500 text-xl leading-relaxed mt-4">
+                  My dear princess,<br /><br />
+                  Do you remember all our special moments together? Let's find out how well you know our little story~
+                </p>
+                <p className="font-dancing text-rose-400 text-lg mt-5">9 questions await you ✨</p>
+              </div>
             </div>
 
             <button
@@ -344,7 +350,7 @@ export default function Index() {
                 boxShadow: "0 8px 32px rgba(244,114,182,0.45)",
               }}
             >
-              Start the quiz 💗
+              Open the letter 💗
             </button>
           </div>
         )}
@@ -361,47 +367,81 @@ export default function Index() {
               </span>
             </div>
 
-            <div className="w-full rounded-full mb-7 overflow-hidden" style={{ height: 3, background: "#fce7f3" }}>
+            <div className="w-full rounded-full mb-6 overflow-hidden" style={{ height: 3, background: "#fce7f3" }}>
               <div
                 className="h-full rounded-full transition-all duration-700"
                 style={{ width: `${progress}%`, background: "linear-gradient(90deg, #f9a8d4, #fb7185)" }}
               />
             </div>
 
+            {/* letter paper card */}
             <div
-              className="bg-white/65 backdrop-blur-md rounded-3xl p-8 border border-rose-100"
-              style={{ boxShadow: "0 12px 56px rgba(244,114,182,0.13)" }}
+              className="relative bg-amber-50 rounded-sm overflow-hidden"
+              style={{
+                boxShadow: "0 4px 6px rgba(0,0,0,0.06), 0 16px 48px rgba(244,114,182,0.15), 4px 4px 0 #f3d5b5",
+                border: "1px solid #e8c99a",
+              }}
             >
-              <h2 className="font-playfair text-2xl text-rose-500 text-center mb-8 font-medium leading-snug" style={{ fontStyle: "italic" }}>
-                {q.question}
-              </h2>
+              {/* ruled lines */}
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: "repeating-linear-gradient(transparent, transparent 39px, #fce4c8 39px, #fce4c8 40px)",
+                backgroundPositionY: "56px",
+              }} />
+              {/* red margin line */}
+              <div className="absolute left-14 top-0 bottom-0 w-px bg-rose-200 pointer-events-none" />
+              {/* paper fold top-right */}
+              <div className="absolute top-0 right-0 w-8 h-8 pointer-events-none" style={{
+                background: "linear-gradient(225deg, #e8c99a 50%, transparent 50%)",
+              }} />
 
-              <div className="space-y-3">
-                {q.options.map((opt, idx) => {
-                  const isShake = shakeIdx === idx;
-                  const isGreen = correctIdx === idx;
-                  const isWrong = confirmed && selected === opt && !isGreen;
+              <div className="relative px-8 pt-8 pb-8 pl-16">
+                {/* question number stamp */}
+                <div className="flex items-center gap-2 mb-6">
+                  <span
+                    className="inline-flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-dancing font-bold"
+                    style={{ background: "linear-gradient(135deg, #f472b6, #fb7185)" }}
+                  >
+                    {currentQ + 1}
+                  </span>
+                  <div className="flex-1 h-px bg-rose-200" />
+                </div>
 
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => handleSelect(opt, idx)}
-                      disabled={confirmed}
-                      className="w-full text-left px-5 py-3.5 rounded-2xl border-2 font-dancing text-lg transition-all duration-200"
-                      style={{
-                        borderColor: isGreen ? "#34d399" : isWrong ? "#fca5a5" : "#fce7f3",
-                        background: isGreen ? "#f0fdf4" : isWrong ? "#fff1f2" : "rgba(255,255,255,0.7)",
-                        color: isGreen ? "#059669" : isWrong ? "#f43f5e" : "#f472b6",
-                        transform: isGreen ? "scale(1.02)" : undefined,
-                        animation: isShake ? "shake 0.42s ease" : undefined,
-                        cursor: confirmed ? "default" : "pointer",
-                      }}
-                    >
-                      <span className="mr-2 opacity-70">{["🌸", "💗", "🌷", "✨"][idx]}</span>
-                      {opt}
-                    </button>
-                  );
-                })}
+                <h2 className="font-playfair text-2xl text-rose-600 mb-8 font-medium leading-snug" style={{ fontStyle: "italic" }}>
+                  {q.question}
+                </h2>
+
+                <div className="space-y-3">
+                  {q.options.map((opt, idx) => {
+                    const isShake = shakeIdx === idx;
+                    const isGreen = correctIdx === idx;
+                    const isWrong = confirmed && selected === opt && !isGreen;
+
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleSelect(opt, idx)}
+                        disabled={confirmed}
+                        className="w-full text-left px-4 py-3 rounded-lg border font-dancing text-lg transition-all duration-200"
+                        style={{
+                          borderColor: isGreen ? "#34d399" : isWrong ? "#fca5a5" : "#e8c99a",
+                          background: isGreen ? "#f0fdf4" : isWrong ? "#fff1f2" : "rgba(255,255,255,0.55)",
+                          color: isGreen ? "#059669" : isWrong ? "#f43f5e" : "#9a7c5a",
+                          transform: isGreen ? "scale(1.02)" : undefined,
+                          animation: isShake ? "shake 0.42s ease" : undefined,
+                          cursor: confirmed ? "default" : "pointer",
+                          boxShadow: isGreen ? "0 0 0 2px #86efac" : isWrong ? "0 0 0 2px #fca5a5" : undefined,
+                        }}
+                      >
+                        <span className="mr-2 text-rose-300">{["①", "②", "③", "④"][idx]}</span>
+                        {opt}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-6 text-right">
+                  <span className="font-dancing text-stone-300 text-sm italic">with love, Yersin 🐾</span>
+                </div>
               </div>
             </div>
           </div>
@@ -410,7 +450,7 @@ export default function Index() {
         {/* ── RESULT ── */}
         {phase === "result" && (
           <div className="text-center">
-            <div className="inline-block text-7xl mb-5" style={{ animation: "heartPulse 1.1s ease-in-out infinite" }}>
+            <div className="inline-block text-6xl mb-5" style={{ animation: "heartPulse 1.1s ease-in-out infinite" }}>
               💖
             </div>
             <h1 className="font-playfair text-5xl text-rose-400 font-semibold mb-1" style={{ fontStyle: "italic" }}>
@@ -420,23 +460,38 @@ export default function Index() {
               {score} out of {questions.length} correct answers
             </p>
 
+            {/* result letter */}
             <div
-              className="bg-white/65 backdrop-blur-md rounded-3xl p-8 mb-8 border border-rose-100 text-left"
-              style={{ boxShadow: "0 12px 56px rgba(244,114,182,0.13)" }}
+              className="relative bg-amber-50 rounded-sm mb-8 overflow-hidden text-left"
+              style={{
+                boxShadow: "0 4px 6px rgba(0,0,0,0.06), 0 16px 48px rgba(244,114,182,0.18), 4px 4px 0 #f3d5b5",
+                border: "1px solid #e8c99a",
+              }}
             >
-              <p className="font-playfair text-rose-300 text-xs italic mb-5 tracking-widest uppercase">
-                A letter to the most beautiful princess
-              </p>
-              <p className="font-dancing text-rose-600 text-[1.25rem] leading-relaxed">
-                Dear and most beautiful Princess Jasmine in the world! 🌹<br /><br />
-                Your little kitten wishes you to never feel sad or worried —<br />
-                everything will be absolutely fine! 🌸<br /><br />
-                Remember that you are the most unique girl on this planet,
-                and you will definitely achieve all of your dreams and goals! ✨
-              </p>
-              <div className="mt-7 pt-5 border-t border-rose-100 text-right">
-                <p className="font-playfair text-rose-300 italic text-base">with all the love,</p>
-                <p className="font-dancing text-rose-500 text-2xl mt-1">your kitten — Yersin 🐾</p>
+              <div className="absolute inset-0 pointer-events-none" style={{
+                backgroundImage: "repeating-linear-gradient(transparent, transparent 39px, #fce4c8 39px, #fce4c8 40px)",
+                backgroundPositionY: "56px",
+              }} />
+              <div className="absolute left-14 top-0 bottom-0 w-px bg-rose-200 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-8 h-8 pointer-events-none" style={{
+                background: "linear-gradient(225deg, #e8c99a 50%, transparent 50%)",
+              }} />
+
+              <div className="relative px-8 pt-8 pb-8 pl-16">
+                <p className="font-playfair text-rose-300 text-xs italic mb-5 tracking-widest uppercase">
+                  A letter to the most beautiful princess
+                </p>
+                <p className="font-dancing text-stone-600 text-[1.2rem] leading-relaxed">
+                  Dear and most beautiful Princess Jasmine in the world! 🌹<br /><br />
+                  Your little kitten wishes you to never feel sad or worried —
+                  everything will be absolutely fine! 🌸<br /><br />
+                  Remember that you are the most unique girl on this planet,
+                  and you will definitely achieve all of your dreams and goals! ✨
+                </p>
+                <div className="mt-7 pt-4 border-t border-amber-200 text-right">
+                  <p className="font-playfair text-rose-300 italic text-sm">with all the love,</p>
+                  <p className="font-dancing text-rose-500 text-2xl mt-1">your kitten — Yersin 🐾</p>
+                </div>
               </div>
             </div>
 
@@ -471,28 +526,19 @@ export default function Index() {
           80% { transform: translateX(5px); }
         }
         @keyframes rainFall {
-          0% {
-            transform: translateY(-30px) translateX(0px);
-            opacity: 1;
-          }
-          50% {
-            transform: translateY(45vh) translateX(var(--sway));
-            opacity: 0.9;
-          }
-          100% {
-            transform: translateY(105vh) translateX(0px);
-            opacity: 0;
-          }
+          0%   { transform: translateY(0)   translateX(0); opacity: 1; }
+          50%  { transform: translateY(48vh) translateX(var(--sway)); opacity: 0.85; }
+          100% { transform: translateY(108vh) translateX(0); opacity: 0; }
         }
         @keyframes fwFlash {
-          0% { transform: translate(-50%,-50%) scale(0); opacity: 1; }
-          60% { transform: translate(-50%,-50%) scale(1.8); opacity: 0.7; }
-          100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+          0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
+          60%  { transform: translate(-50%,-50%) scale(2); opacity: 0.7; }
+          100% { transform: translate(-50%,-50%) scale(3); opacity: 0; }
         }
         @keyframes fwParticle {
-          0% { transform: translate(0, 0) scale(1); opacity: 1; }
-          80% { opacity: 0.8; }
-          100% { transform: translate(var(--tx), var(--ty)) scale(0.3); opacity: 0; }
+          0%   { transform: translate(0,0) scale(1); opacity: 1; }
+          80%  { opacity: 0.7; }
+          100% { transform: translate(var(--tx), var(--ty)) scale(0.2); opacity: 0; }
         }
       `}</style>
     </div>
